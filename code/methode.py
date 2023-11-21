@@ -22,26 +22,49 @@ def source(graphe):
         
         return max(list_entr_sort,key=list_entr_sort.get)
         
-
+def construction_arboresecnce(graphe, dist, pred):
+    """Construit l'arborescence des PCCH"""
+    sommets, arcs = graphe
+    newA = []
+    for i in range(len(sommets)):
+        if dist[i] != 0:
+            for (u, v, c) in arcs:
+                if u == pred[i] and v == sommets[i]:
+                    newA.append((u, v, c))
+                    continue
+    return (sommets, newA)
 
 def bellman_Ford(graphe):
-    """Algo Bellman-Ford appliqué pour le graphe"""
-    src=source(graphe)
-    dist=[float(math.inf)] * len(graphe[0])
-    dist[src]=0
-    etat_conv=-1
+    """Algo Bellman-Ford appliqué pour le graphe
+    entrée:
+        graphe : tuple(liste d'ordre de sommets, liste d'arcs)
+    sortie:
+        tuple(arborescence de PCCH, nombre d'itérations)
+    """
+    #src=source(graphe)
+    sommets, arcs = graphe
+    src = sommets[0]
+    dist = [[float(math.inf)] * len(sommets), [float(math.inf)] * len(sommets)] #matrice de distance, stoque que dist[k] et dist[k+1] à chaque itération
+    pred = [None] * len(sommets)    #liste de sommet prédecesseur
+    dist[0][sommets.index(src)] = 0
+    dist[1][sommets.index(src)] = 0
     
-    for i in range(len(graphe[0])):
-        conv=True
-        for (u,v,w) in graphe[1]:
-            if dist[u]+w<dist[v] and dist[u] != math.inf:
-                dist[v]=dist[u]+w
-                conv = False
-        if conv:
-            etat_conv=i
+    for i in range(0, len(sommets)):
+        for (u,v,w) in arcs:
+            indu, indv = sommets.index(u), sommets.index(v)
+            if dist[i%2][indu]+w < dist[i%2][indv]: #i%2 <- k, (i+1)%2 <- k+1
+                dist[(i+1)%2][indv]=dist[i%2][indu]+w
+                pred[indv] = u
 
+        #print("dist =", dist)
+        #print("pred =", pred)
 
-    return dist,etat_conv
+        if dist[i%2] == dist[(i+1)%2]:  #si convergence
+            return construction_arboresecnce(graphe, dist[(i+1)%2], pred), i+1
+        dist[i%2] = [dist[(i+1)%2][j] for j in range(len(sommets))]
+
+    #Bellman-Ford doit convergé à au plus n-1 itérztions s'il n'a pas de cycle absorbant
+    raise NameError("non convergence, il existe un cycle absorbant")
 
 def list_source(graphe):
     """Vérification si u est la source du graphe"""
