@@ -125,3 +125,43 @@ def gloutonFas(graphe):
         
 
     return s1+s2
+
+def genere_graphe(nb_sommets,p):
+    g=[]
+    list_sommets=[i for i in range(nb_sommets)]
+    while(True):
+        list_weight=[np.random.randint(-10,11) for _ in range(4)]
+        list_arc=[(i,j,np.random.choice(list_weight)) for i in range(nb_sommets) for j in range(nb_sommets) if np.random.random()<p and i!=j]
+        g=list_sommets,list_arc
+        if not(check_circuit_negatif(g)):
+            break
+
+
+
+    return g
+
+def check_circuit_negatif(graphe):
+    list_sommets,list_arc=graphe
+    A=np.zeros((len(list_sommets),len(list_sommets)))
+
+    for i in range(len(list_sommets)):
+        for j in range(len(list_sommets)):
+            if i!=j:
+                A[(i,j)]=float(math.inf)
+
+    for arc in list_arc:
+        A[arc[0]][arc[1]]=arc[2]
+
+
+    for _ in range(len(list_sommets)):
+        for i in range(len(A)):
+            for j in range(len(A[i])):
+                for k in range(len(list_sommets)):
+                    A[(i,j)]=min(A[(i,j)],A[(i,k)]+A[(k,j)])
+
+    
+    for i in range(len(A)):
+        if A[(i,i)]!=0:
+            return True #Circuit detecté
+        
+    return False #NO CIRCUIT
