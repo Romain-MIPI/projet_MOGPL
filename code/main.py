@@ -14,5 +14,5 @@ arr = gloutonFas(g_projet)
 #print(bellman_Ford(g_projet))
 #print(bellman_Ford((arr, g_projet[1])))
 
-g=genere_graphe(4,0.5)
-print(bellman_Ford(g))
+
+test()

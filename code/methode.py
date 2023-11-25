@@ -44,7 +44,7 @@ def bellman_Ford(graphe):
     #src=source(graphe)
     sommets, arcs = graphe
     src = sommets[0]
-    dist = [[float(math.inf)] * len(sommets), [float(math.inf)] * len(sommets)] #matrice de distance, stoque que dist[k] et dist[k+1] à chaque itération
+    dist = [[1000] * len(sommets), [1000] * len(sommets)] #matrice de distance, stoque que dist[k] et dist[k+1] à chaque itération
     pred = [None] * len(sommets)    #liste de sommet prédecesseur
     dist[0][sommets.index(src)] = 0
     dist[1][sommets.index(src)] = 0
@@ -52,7 +52,7 @@ def bellman_Ford(graphe):
     for i in range(0, len(sommets)):
         for (u,v,w) in arcs:
             indu, indv = sommets.index(u), sommets.index(v)
-            if dist[i%2][indu]+w < dist[i%2][indv]: #i%2 <- k, (i+1)%2 <- k+1
+            if dist[i%2][indu]+w < dist[(i+1)%2][indv]: #i%2 <- k, (i+1)%2 <- k+1
                 dist[(i+1)%2][indv]=dist[i%2][indu]+w
                 pred[indv] = u
 
@@ -61,9 +61,11 @@ def bellman_Ford(graphe):
 
         if dist[i%2] == dist[(i+1)%2]:  #si convergence
             return construction_arboresecnce(graphe, dist[(i+1)%2], pred), i+1
+        
         dist[i%2] = [dist[(i+1)%2][j] for j in range(len(sommets))]
 
     #Bellman-Ford doit convergé à au plus n-1 itérztions s'il n'a pas de cycle absorbant
+    #print(graphe)
     raise NameError("non convergence, il existe un cycle absorbant")
 
 def list_source(graphe):
@@ -147,17 +149,18 @@ def check_circuit_negatif(graphe):
     for i in range(len(list_sommets)):
         for j in range(len(list_sommets)):
             if i!=j:
-                A[(i,j)]=float(math.inf)
+                A[(i,j)]=1000
 
     for arc in list_arc:
         A[arc[0]][arc[1]]=arc[2]
 
 
     for _ in range(len(list_sommets)):
-        for i in range(len(A)):
-            for j in range(len(A[i])):
-                for k in range(len(list_sommets)):
+        for k in range(len(A)):
+            for i in range(len(A)):
+                for j in range(len(A[i])):
                     A[(i,j)]=min(A[(i,j)],A[(i,k)]+A[(k,j)])
+
 
     
     for i in range(len(A)):
@@ -165,3 +168,11 @@ def check_circuit_negatif(graphe):
             return True #Circuit detecté
         
     return False #NO CIRCUIT
+
+
+def test():
+    for i in range(1000):
+        if i%100==0:
+            print(i)
+        g=genere_graphe(10,0.5)
+        bellman_Ford(g)
