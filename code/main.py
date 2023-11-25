@@ -14,5 +14,5 @@ arr = gloutonFas(g_projet)
 #print(bellman_Ford(g_projet))
 #print(bellman_Ford((arr, g_projet[1])))
 
-
-test()
+for _ in range(10):
+    test()
