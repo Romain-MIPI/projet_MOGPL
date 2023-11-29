@@ -106,6 +106,7 @@ def gloutonFas(graphe):
     graphe_copy=copy.deepcopy(graphe)
     s1=[]
     s2=[]
+
     while(graphe_copy[0] != []):
         liste_source=list_source(graphe_copy)
         while(liste_source != []):
@@ -173,6 +174,21 @@ def change_weight(G):
     newW = np.random.randint(-3, 11, size=len(W))
 
     return (S, A, newW)
+def construire_arb(p):
+    arb=[]
+    for pred in p: 
+        for sommet,predecesseur in pred:
+            if predecesseur is not None and (predecesseur,sommet) not in arb:
+                arb.append((predecesseur,sommet))
+    
+    return arb
+
+def union3G(graphes):
+    chemins=[]
+    for i in range(3):
+        d,p,iterations=bellman_Ford(graphes[i])
+        chemins.append(p)
+    return construire_arb(chemins)
 
 def test(nbS, p, nbApp):
     """
@@ -183,77 +199,87 @@ def test(nbS, p, nbApp):
     if nbApp < 3:
         raise NameError("nbApp doit être plus grand que 3")
     
-    G = genere_graphe(nbS, p)
+    G1 = genere_graphe(nbS, p)
 
-    print("\nG =", G)
-    dist, _, _ = bellman_Ford(G)
+    #print("\nG =", G)
+    dist, _, _ = bellman_Ford(G1)
     dist = np.where(np.isinf(dist), dist, 1)
     _, counts = np.unique(dist, return_counts=True)
 
     # si le sommet source choisit n'atteint pas |V|/2 sommets, on change le sommets source
-    while counts[0] < np.ceil(len(G[0])/2)+1:
-        pop = G[0].pop(0)
-        G[0].append(pop)
-        dist, _, _ = bellman_Ford(G)
+    while counts[0] < np.ceil(len(G1[0])/2)+1:
+        pop = G1[0].pop(0)
+        G1[0].append(pop)
+        dist, _, _ = bellman_Ford(G1)
         dist = np.where(np.isinf(dist), dist, 1)
         _, counts = np.unique(dist, return_counts=True)
 
-    # génération du graphe test H
-    H = change_weight(G)
-    res = bellman_Ford(H)
+    G2=change_weight(G1)
+    res = bellman_Ford(G2)
     while(res == False):
-        H = change_weight(G)
+        G2 = change_weight(G1)
+        res = bellman_Ford(G2)
+    G3=change_weight(G1)
+    res = bellman_Ford(G3)
+    while(res == False):
+        G3 = change_weight(G1)
+        res = bellman_Ford(G3)
+
+    # génération du graphe test H
+    H = change_weight(G1)
+    while(res == False):
+        H = change_weight(G1)
         res = bellman_Ford(H)
-    print("\nH =", H)
 
     list_nbIter = []
+    liste_nbItera=[]
+
+    list_arboresence = union3G([G1,G2,G3])
     for n in range(3, nbApp+1):
         # création des N graphes d'apprentissages et ses arboresences
-        list_arboresence = []
         N = n
         cpt = 0
-        while cpt < N:
-            newG = change_weight(G)
-            res = bellman_Ford(newG)
-            if(res != False):
-                _, arboresence, _ = res
-                list_arboresence += arboresence
-                cpt += 1
-                #print("\nG%d ="%cpt, newG)
+        H = change_weight(G1)
+        res = bellman_Ford(H)
+        while(res == False):
+            H = change_weight(G1)
+            res = bellman_Ford(H)
 
         # union des arboresences des plus courts chemins des graphes d'apprentissages
+        #print("List Arbrosence",list_arboresence)
+        list_arboresence.sort()
         T = list(set(list_arboresence))
         T.sort()
-        #print("\nT =", T)
+        print("\nT =", T)
 
         # calcul de l'ordre <tot de T
-        ordre = gloutonFas((G[0], T))
+        ordre = gloutonFas((G1[0], T))
         dist, _, nbIter = bellman_Ford((ordre, H[1], H[2]))
         print("\npour %d graphes appris :\nordre <tot="%n, ordre)
-        print("avec dist =", dist)
+        #print("avec dist =", dist)
         list_nbIter.append(nbIter)
 
-    # ordre aléatoire
-    ordre_aleatoire = copy.copy(ordre)
-    np.random.shuffle(ordre_aleatoire)
-    # on conserve toujours le même sommet source
-    ordre_aleatoire.remove(G[0][0])
-    ordre_aleatoire = [G[0][0]] + ordre_aleatoire
-    distA, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
-    distA_p = np.where(np.isinf(distA), distA, 1)
-    _, counts = np.unique(distA_p, return_counts=True)
-    # si le sommet source n'atteint pas |V|/2 sommets, on change le source
-    while counts[0] < np.ceil(len(G[0])/2)+1:
+        # ordre aléatoire
+        ordre_aleatoire = copy.copy(ordre)
         np.random.shuffle(ordre_aleatoire)
+        # on conserve toujours le même sommet source
+        ordre_aleatoire.remove(G1[0][0])
+        ordre_aleatoire = [G1[0][0]] + ordre_aleatoire
         distA, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
         distA_p = np.where(np.isinf(distA), distA, 1)
         _, counts = np.unique(distA_p, return_counts=True)
-    print("\nordre_aleatoire =", ordre_aleatoire)
-    print("avec dist =", distA)
+        # si le sommet source n'atteint pas |V|/2 sommets, on change le source
+        while counts[0] < np.ceil(len(G1[0])/2)+1:
+            np.random.shuffle(ordre_aleatoire)
+            distA, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
+            distA_p = np.where(np.isinf(distA), distA, 1)
+            _, counts = np.unique(distA_p, return_counts=True)
+        print("\nordre_aleatoire =", ordre_aleatoire)
+        liste_nbItera.append(nbIterA)
     
     # plot courbe nbIter en fonction de nbApp
     x = [i for i in range(3, nbApp+1)]
     plt.plot(x, list_nbIter, label="nbIter avec apprentissage", color='b')
-    plt.plot(x, [nbIterA]*len(x), label="nbIter avec ordre aléatoire", color='r', linestyle='--')
+    plt.plot(x, liste_nbItera, label="nbIter avec ordre aléatoire", color='r', linestyle='--')
     plt.legend()
     plt.show()
