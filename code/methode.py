@@ -276,6 +276,8 @@ def test(nbS, p, nbtest):
     
     # plot courbe nbIter en fonction de nbApp
     x = [i for i in range(nbtest)]
+    plt.xlabel("nième graphe testé")
+    plt.ylabel("Nombre d'itération nécessaire")
     plt.plot(x, list_nbIter, label="nbIter avec apprentissage", color='b')
     plt.plot(x, liste_nbItera, label="nbIter avec ordre aléatoire", color='r', linestyle='--')
     plt.legend()
@@ -330,7 +332,8 @@ def testavecbnapprentissage(nbS,p,nbapp):
 
 
     x = [i for i in range(nbapp)]
+    plt.xlabel("Nombre de graphe appris")
+    plt.ylabel("Nombre d'itération nécessaire")
     plt.plot(x, list_nb_iter_app, color='b')
-    plt.legend()
     plt.show()
 
