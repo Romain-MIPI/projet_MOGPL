@@ -185,21 +185,24 @@ def construire_arb(p):
 
 def union3G(graphes):
     chemins=[]
-    for i in range(3):
+    for i in range(len(graphes)):
         d,p,iterations=bellman_Ford(graphes[i])
         chemins.append(p)
     return construire_arb(chemins)
 
-def test(nbS, p, nbApp):
+#Questions 6,7,8,9
+def test(nbS, p, nbtest):
     """
     nbS (int) : nombre de sommets à générer
     p (float) : proba que l'arc (i, j) soit générer
-    npApp (int) : nombre de graphes d'apprentissages, >= 3
+    npApp (int) : nombre de graphes d'application, >= 3
+    on fixe le nombre d'appretissage à 3
     """
-    if nbApp < 3:
-        raise NameError("nbApp doit être plus grand que 3")
     
     G1 = genere_graphe(nbS, p)
+    res = bellman_Ford(G1)
+    while(res == False):
+        res = bellman_Ford(G1)
 
     #print("\nG =", G)
     dist, _, _ = bellman_Ford(G1)
@@ -225,20 +228,14 @@ def test(nbS, p, nbApp):
         G3 = change_weight(G1)
         res = bellman_Ford(G3)
 
-    # génération du graphe test H
-    H = change_weight(G1)
-    while(res == False):
-        H = change_weight(G1)
-        res = bellman_Ford(H)
-
     list_nbIter = []
     liste_nbItera=[]
 
     list_arboresence = union3G([G1,G2,G3])
-    for n in range(3, nbApp+1):
+    for n in range(nbtest):
         # création des N graphes d'apprentissages et ses arboresences
         N = n
-        cpt = 0
+        # génération du graphe test H
         H = change_weight(G1)
         res = bellman_Ford(H)
         while(res == False):
@@ -255,7 +252,7 @@ def test(nbS, p, nbApp):
         # calcul de l'ordre <tot de T
         ordre = gloutonFas((G1[0], T))
         dist, _, nbIter = bellman_Ford((ordre, H[1], H[2]))
-        print("\npour %d graphes appris :\nordre <tot="%n, ordre)
+        print("\npour %dième graphe testé :\nordre <tot="%n, ordre)
         #print("avec dist =", dist)
         list_nbIter.append(nbIter)
 
@@ -278,8 +275,62 @@ def test(nbS, p, nbApp):
         liste_nbItera.append(nbIterA)
     
     # plot courbe nbIter en fonction de nbApp
-    x = [i for i in range(3, nbApp+1)]
+    x = [i for i in range(nbtest)]
     plt.plot(x, list_nbIter, label="nbIter avec apprentissage", color='b')
     plt.plot(x, liste_nbItera, label="nbIter avec ordre aléatoire", color='r', linestyle='--')
     plt.legend()
     plt.show()
+
+
+def testavecbnapprentissage(nbS,p,nbapp):
+    G = genere_graphe(nbS, p)
+
+    #print("\nG =", G)
+    dist, _, _ = bellman_Ford(G)
+    dist = np.where(np.isinf(dist), dist, 1)
+    _, counts = np.unique(dist, return_counts=True)
+
+    # si le sommet source choisit n'atteint pas |V|/2 sommets, on change le sommets source
+    while counts[0] < np.ceil(len(G[0])/2)+1:
+        pop = G[0].pop(0)
+        G[0].append(pop)
+        dist, _, _ = bellman_Ford(G)
+        dist = np.where(np.isinf(dist), dist, 1)
+        _, counts = np.unique(dist, return_counts=True)
+
+    H=change_weight(G)
+    res = bellman_Ford(H)
+    while(res == False):
+        H = change_weight(G)
+        res = bellman_Ford(H)
+
+    list_nb_iter_app=[res[2]]
+    list_graph=[G]
+
+    for n in range(1,nbapp):
+        list_arboresence=union3G(list_graph)
+        list_arboresence.sort()
+        T = list(set(list_arboresence))
+        T.sort()
+        print("\nT =", T)
+        # calcul de l'ordre <tot de T
+        ordre = gloutonFas((G[0], T))
+        dist, _, nbIter = bellman_Ford((ordre, H[1], H[2]))
+        print("\npour %dième graphe testé :\nordre <tot="%n, ordre)
+        #print("avec dist =", dist)
+        list_nb_iter_app.append(nbIter)
+
+        Gnew=change_weight(G)
+        res = bellman_Ford(Gnew)
+        while(res == False):
+            Gnew = change_weight(G)
+            res = bellman_Ford(Gnew)
+        
+        list_graph.append(Gnew)
+
+
+    x = [i for i in range(nbapp)]
+    plt.plot(x, list_nb_iter_app, color='b')
+    plt.legend()
+    plt.show()
+
