@@ -45,27 +45,30 @@ def bellman_Ford(graphe):
     #src=source(graphe)
     sommets, arcs, poids = graphe
     src = sommets[0]
-    dist = [[np.inf] * len(sommets), [np.inf] * len(sommets)] #matrice de distance, stoque que dist[k] et dist[k+1] à chaque itération
+    dist = [np.inf] * len(sommets) #matrice de distance, stoque que dist[k] et dist[k+1] à chaque itération
     pred = [None] * len(sommets)    #liste de sommet prédecesseur
-    dist[0][sommets.index(src)] = 0
-    dist[1][sommets.index(src)] = 0
+    dist[sommets.index(src)] = 0
+    conv = False
     
     for i in range(0, len(sommets)):
-        for j in range(len(arcs)):
-            u, v = arcs[j]
-            w = poids[j]
-            indu, indv = sommets.index(u), sommets.index(v)
-            if dist[i%2][indu]+w < dist[i%2][indv]: #i%2 <- k, (i+1)%2 <- k+1
-                dist[(i+1)%2][indv]=dist[i%2][indu]+w
-                pred[indv] = u
-
+        conv = True
+        for u in sommets:
+            # arc = (v, u)
+            for j, arc in enumerate(arcs):
+                if arc[1] == u:
+                    v = arc[0]
+                    w = poids[j]
+                    indu, indv = sommets.index(u), sommets.index(v)
+                    if dist[indv]+w < dist[indu]:
+                        dist[indu] = dist[indv]+w
+                        pred[indu] = v
+                        conv = False
+        
         #print("dist =", dist)
         #print("pred =", pred)
 
-        if dist[i%2] == dist[(i+1)%2]:  #si convergence
-            return dist[i%2], construction_arboresecnce(graphe, src, pred), i+1
-        
-        dist[i%2] = [dist[(i+1)%2][j] for j in range(len(sommets))]
+        if conv:  #si convergence
+            return dist, construction_arboresecnce(graphe, src, pred), i
 
     #Bellman-Ford doit convergé à au plus n-1 itérations s'il n'a pas de cycle absorbant
     #print("non convergence, il existe un cycle absorbant")
@@ -140,31 +143,6 @@ def genere_graphe(nb_sommets,p):
 
     return list_sommets, list_arc, list_poids
 
-# plus vraiment besoin car Bellman-Ford peut faire la vérification en O(n)
-def check_circuit_negatif(graphe):
-    list_sommets,list_arc=graphe
-    A=np.zeros((len(list_sommets),len(list_sommets)))
-
-    for i in range(len(list_sommets)):
-        for j in range(len(list_sommets)):
-            if i!=j:
-                A[(i,j)]=1000
-
-    for arc in list_arc:
-        A[list_sommets.index(arc[0])][list_sommets.index(arc[1])]=arc[2]
-
-    for _ in range(len(list_sommets)):
-        for k in range(len(A)):
-            for i in range(len(A)):
-                for j in range(len(A[i])):
-                    A[(i,j)]=min(A[(i,j)],A[(i,k)]+A[(k,j)])
-    
-    for i in range(len(A)):
-        if A[(i,i)]!=0:
-            return True #Circuit detecté
-        
-    return False #NO CIRCUIT
-
 def change_weight(G):
     """
     change le poids des arcs
@@ -174,24 +152,9 @@ def change_weight(G):
     newW = np.random.randint(-3, 11, size=len(W))
 
     return (S, A, newW)
-def construire_arb(p):
-    arb=[]
-    for pred in p: 
-        for sommet,predecesseur in pred:
-            if predecesseur is not None and (predecesseur,sommet) not in arb:
-                arb.append((predecesseur,sommet))
-    
-    return arb
-
-def union3G(graphes):
-    chemins=[]
-    for i in range(len(graphes)):
-        d,p,iterations=bellman_Ford(graphes[i])
-        chemins.append(p)
-    return construire_arb(chemins)
 
 #Questions 6,7,8,9
-def test(nbS, p, nbtest):
+def test(nbS, p, nbApp):
     """
     nbS (int) : nombre de sommets à générer
     p (float) : proba que l'arc (i, j) soit générer
@@ -199,92 +162,6 @@ def test(nbS, p, nbtest):
     on fixe le nombre d'appretissage à 3
     """
     
-    G1 = genere_graphe(nbS, p)
-    res = bellman_Ford(G1)
-    while(res == False):
-        res = bellman_Ford(G1)
-
-    #print("\nG =", G)
-    dist, _, _ = bellman_Ford(G1)
-    dist = np.where(np.isinf(dist), dist, 1)
-    _, counts = np.unique(dist, return_counts=True)
-
-    # si le sommet source choisit n'atteint pas |V|/2 sommets, on change le sommets source
-    while counts[0] < np.ceil(len(G1[0])/2)+1:
-        pop = G1[0].pop(0)
-        G1[0].append(pop)
-        dist, _, _ = bellman_Ford(G1)
-        dist = np.where(np.isinf(dist), dist, 1)
-        _, counts = np.unique(dist, return_counts=True)
-
-    G2=change_weight(G1)
-    res = bellman_Ford(G2)
-    while(res == False):
-        G2 = change_weight(G1)
-        res = bellman_Ford(G2)
-    G3=change_weight(G1)
-    res = bellman_Ford(G3)
-    while(res == False):
-        G3 = change_weight(G1)
-        res = bellman_Ford(G3)
-
-    list_nbIter = []
-    liste_nbItera=[]
-
-    list_arboresence = union3G([G1,G2,G3])
-    for n in range(nbtest):
-        # création des N graphes d'apprentissages et ses arboresences
-        N = n
-        # génération du graphe test H
-        H = change_weight(G1)
-        res = bellman_Ford(H)
-        while(res == False):
-            H = change_weight(G1)
-            res = bellman_Ford(H)
-
-        # union des arboresences des plus courts chemins des graphes d'apprentissages
-        #print("List Arbrosence",list_arboresence)
-        list_arboresence.sort()
-        T = list(set(list_arboresence))
-        T.sort()
-        print("\nT =", T)
-
-        # calcul de l'ordre <tot de T
-        ordre = gloutonFas((G1[0], T))
-        dist, _, nbIter = bellman_Ford((ordre, H[1], H[2]))
-        print("\npour %dième graphe testé :\nordre <tot="%n, ordre)
-        #print("avec dist =", dist)
-        list_nbIter.append(nbIter)
-
-        # ordre aléatoire
-        ordre_aleatoire = copy.copy(ordre)
-        np.random.shuffle(ordre_aleatoire)
-        # on conserve toujours le même sommet source
-        ordre_aleatoire.remove(G1[0][0])
-        ordre_aleatoire = [G1[0][0]] + ordre_aleatoire
-        distA, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
-        distA_p = np.where(np.isinf(distA), distA, 1)
-        _, counts = np.unique(distA_p, return_counts=True)
-        # si le sommet source n'atteint pas |V|/2 sommets, on change le source
-        while counts[0] < np.ceil(len(G1[0])/2)+1:
-            np.random.shuffle(ordre_aleatoire)
-            distA, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
-            distA_p = np.where(np.isinf(distA), distA, 1)
-            _, counts = np.unique(distA_p, return_counts=True)
-        print("\nordre_aleatoire =", ordre_aleatoire)
-        liste_nbItera.append(nbIterA)
-    
-    # plot courbe nbIter en fonction de nbApp
-    x = [i for i in range(nbtest)]
-    plt.xlabel("nième graphe testé")
-    plt.ylabel("Nombre d'itération nécessaire")
-    plt.plot(x, list_nbIter, label="nbIter avec apprentissage", color='b')
-    plt.plot(x, liste_nbItera, label="nbIter avec ordre aléatoire", color='r', linestyle='--')
-    plt.legend()
-    plt.show()
-
-
-def testavecbnapprentissage(nbS,p,nbapp):
     G = genere_graphe(nbS, p)
 
     #print("\nG =", G)
@@ -293,47 +170,84 @@ def testavecbnapprentissage(nbS,p,nbapp):
     _, counts = np.unique(dist, return_counts=True)
 
     # si le sommet source choisit n'atteint pas |V|/2 sommets, on change le sommets source
-    while counts[0] < np.ceil(len(G[0])/2)+1:
+    while counts[0]-1 < np.ceil(len(G[0])/2):
         pop = G[0].pop(0)
         G[0].append(pop)
         dist, _, _ = bellman_Ford(G)
         dist = np.where(np.isinf(dist), dist, 1)
         _, counts = np.unique(dist, return_counts=True)
 
-    H=change_weight(G)
+    H = change_weight(G)
     res = bellman_Ford(H)
+    # res = dist, arboresence, nbIter si non circuit absorbant
+    # res = False sinon
     while(res == False):
         H = change_weight(G)
         res = bellman_Ford(H)
 
-    list_nb_iter_app=[res[2]]
-    list_graph=[G]
+    list_nb_iter_app=[]
+    list_arboresence=[]
 
-    for n in range(1,nbapp):
-        list_arboresence=union3G(list_graph)
-        list_arboresence.sort()
+    # calcul de l'ordre <tot
+    # on fait 3 apprentissages par défaut
+    for n in range(0, 3):
+        newG=change_weight(G)
+        res = bellman_Ford(newG)
+        # res = dist, arboresence, nbIter si non circuit absorbant
+        # res = False sinon
+        while(res == False):
+            newG = change_weight(G)
+            res = bellman_Ford(newG)
+
+        list_arboresence += res[1]
+
+    # T : union des arborescences des plus courts chemin
+    T = list(set(list_arboresence))
+    T.sort()
+    # calcul de l'ordre <tot de T
+    ordre = gloutonFas((G[0], T))
+    _, _, nbIter = bellman_Ford((ordre, H[1], H[2]))
+    print("\npour 3 graphes appris :\nordre <tot=", ordre)
+    print("nbIter =", nbIter)
+    list_nb_iter_app.append(nbIter)
+
+    # si nbApp > 3
+    for n in range(3, nbApp):
+        newG=change_weight(G)
+        res = bellman_Ford(newG)
+        # res = dist, arboresence, nbIter si non circuit absorbant
+        # res = False sinon
+        while(res == False):
+            newG = change_weight(G)
+            res = bellman_Ford(newG)
+
+        list_arboresence += res[1]
+
         T = list(set(list_arboresence))
         T.sort()
-        print("\nT =", T)
         # calcul de l'ordre <tot de T
         ordre = gloutonFas((G[0], T))
-        dist, _, nbIter = bellman_Ford((ordre, H[1], H[2]))
-        print("\npour %dième graphe testé :\nordre <tot="%n, ordre)
-        #print("avec dist =", dist)
+        _, _, nbIter = bellman_Ford((ordre, H[1], H[2]))
+        print("\npour %d graphes appris :\nordre <tot="%(n+1), ordre)
+        print("nbIter =", nbIter)
         list_nb_iter_app.append(nbIter)
 
-        Gnew=change_weight(G)
-        res = bellman_Ford(Gnew)
-        while(res == False):
-            Gnew = change_weight(G)
-            res = bellman_Ford(Gnew)
-        
-        list_graph.append(Gnew)
+    # ordre aléatoire
+    ordre_aleatoire = copy.copy(ordre)
+    np.random.shuffle(ordre_aleatoire)
+    # on conserve toujours le même sommet source
+    ordre_aleatoire.remove(G[0][0])
+    ordre_aleatoire = [G[0][0]] + ordre_aleatoire
+    distA, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
+    distA_p = np.where(np.isinf(distA), distA, 1)
+    _, counts = np.unique(distA_p, return_counts=True)
+    print("\nordre_aleatoire =", ordre_aleatoire)
+    print("avec dist =", distA)
 
-
-    x = [i for i in range(nbapp)]
+    x = [i for i in range(3, nbApp+1)]
     plt.xlabel("Nombre de graphe appris")
     plt.ylabel("Nombre d'itération nécessaire")
-    plt.plot(x, list_nb_iter_app, color='b')
+    plt.plot(x, list_nb_iter_app, label="nbIter avec apprentissage", color='b')
+    plt.plot(x, [nbIterA]*len(x), label="nbIter avec ordre aléatoire", color='r', linestyle='--')
+    plt.legend()
     plt.show()
-
