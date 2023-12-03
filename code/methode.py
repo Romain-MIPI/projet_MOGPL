@@ -176,15 +176,18 @@ def test(nbS, p, nbApp):
         if cpt == nbS:
             G = genere_graphe(nbS, p)
             cpt = 0
-            continue
-
-        # ochangement de sommet source et calcul de la nouvelle distance
-        pop = G[0].pop(0)
-        G[0].append(pop)
-        cpt += 1
-        dist, _, _ = bellman_Ford(G)
-        dist = np.where(np.isinf(dist), dist, 1)
-        _, counts = np.unique(dist, return_counts=True)
+            dist, _, _ = bellman_Ford(G)
+            dist = np.where(np.isinf(dist), dist, 1)
+            _, counts = np.unique(dist, return_counts=True)
+        
+        # changement de sommet source et calcul de la nouvelle distance
+        else:
+            pop = G[0].pop(0)
+            G[0].append(pop)
+            cpt += 1
+            dist, _, _ = bellman_Ford(G)
+            dist = np.where(np.isinf(dist), dist, 1)
+            _, counts = np.unique(dist, return_counts=True)
 
     H = change_weight(G)
     res = bellman_Ford(H)
