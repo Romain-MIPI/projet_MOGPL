@@ -160,18 +160,28 @@ def test(nbS, p, nbApp):
     npApp (int) : nombre de graphes d'application, >= 3
     on fixe le nombre d'appretissage à 3
     """
-    
+    # génération de G et choix de sommet source
     G = genere_graphe(nbS, p)
 
     print("\nG =", G[:-1])
     dist, _, _ = bellman_Ford(G)
     dist = np.where(np.isinf(dist), dist, 1)
     _, counts = np.unique(dist, return_counts=True)
+    cpt = 0 # compteur qui vérifie si on a vérifié pour tous les sommets
 
     # si le sommet source choisit n'atteint pas |V|/2 sommets, on change le sommets source
     while counts[0]-1 < np.ceil(len(G[0])/2):
+        # aucun sommet source peut atteindre au moins |V|/2 sommets
+        # on change de graphe
+        if cpt == nbS:
+            G = genere_graphe(nbS, p)
+            cpt = 0
+            continue
+
+        # ochangement de sommet source et calcul de la nouvelle distance
         pop = G[0].pop(0)
         G[0].append(pop)
+        cpt += 1
         dist, _, _ = bellman_Ford(G)
         dist = np.where(np.isinf(dist), dist, 1)
         _, counts = np.unique(dist, return_counts=True)
