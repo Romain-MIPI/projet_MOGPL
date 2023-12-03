@@ -258,12 +258,12 @@ def test(nbS, p, nbApp):
     print("\nordre_aleatoire =", ordre_aleatoire)
     print("nbIter =", nbIterA)
 
-    x = [i for i in range(3, nbApp+1)]
-    plt.xlabel("Nombre de graphe appris")
-    plt.ylabel("Nombre d'itération nécessaire")
-    plt.plot(x, list_nb_iter_app, label="nbIter avec apprentissage", color='b')
-    plt.plot(x, [nbIterA]*len(x), label="nbIter avec ordre aléatoire", color='r', linestyle='--')
-    plt.legend()
-    if nbApp > 3:
+    if nbApp > 3:        
+        x = [i for i in range(3, nbApp+1)]
+        plt.xlabel("Nombre de graphe appris")
+        plt.ylabel("Nombre d'itération nécessaire")
+        plt.plot(x, list_nb_iter_app, label="nbIter avec apprentissage", color='b')
+        plt.plot(x, [nbIterA]*len(x), label="nbIter avec ordre aléatoire", color='r', linestyle='--')
+        plt.legend()
         plt.savefig('res/courbe_nbIter_pour_%d_apprentissasges.png'%nbApp)
-    plt.show()
+        plt.show()
