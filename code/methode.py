@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import copy
 import matplotlib.pyplot as plt
 
@@ -164,7 +163,7 @@ def test(nbS, p, nbApp):
     
     G = genere_graphe(nbS, p)
 
-    #print("\nG =", G)
+    print("\nG =", G[:-1])
     dist, _, _ = bellman_Ford(G)
     dist = np.where(np.isinf(dist), dist, 1)
     _, counts = np.unique(dist, return_counts=True)
@@ -185,6 +184,8 @@ def test(nbS, p, nbApp):
         H = change_weight(G)
         res = bellman_Ford(H)
 
+    print("\nw_H =", H[2])
+
     list_nb_iter_app=[]
     list_arboresence=[]
 
@@ -198,6 +199,7 @@ def test(nbS, p, nbApp):
         while(res == False):
             newG = change_weight(G)
             res = bellman_Ford(newG)
+        print("\nw%d ="%(n+1), newG[2])
 
         list_arboresence += res[1]
 
@@ -220,6 +222,7 @@ def test(nbS, p, nbApp):
         while(res == False):
             newG = change_weight(G)
             res = bellman_Ford(newG)
+        print("\nw%d ="%(n+1), newG[2])
 
         list_arboresence += res[1]
 
@@ -238,11 +241,9 @@ def test(nbS, p, nbApp):
     # on conserve toujours le même sommet source
     ordre_aleatoire.remove(G[0][0])
     ordre_aleatoire = [G[0][0]] + ordre_aleatoire
-    distA, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
-    distA_p = np.where(np.isinf(distA), distA, 1)
-    _, counts = np.unique(distA_p, return_counts=True)
+    _, _, nbIterA = bellman_Ford((ordre_aleatoire, H[1], H[2]))
     print("\nordre_aleatoire =", ordre_aleatoire)
-    print("avec dist =", distA)
+    print("nbIter =", nbIterA)
 
     x = [i for i in range(3, nbApp+1)]
     plt.xlabel("Nombre de graphe appris")
@@ -250,4 +251,6 @@ def test(nbS, p, nbApp):
     plt.plot(x, list_nb_iter_app, label="nbIter avec apprentissage", color='b')
     plt.plot(x, [nbIterA]*len(x), label="nbIter avec ordre aléatoire", color='r', linestyle='--')
     plt.legend()
+    if nbApp > 3:
+        plt.savefig('res/courbe_nbIter_pour_%d_apprentissasges.png'%nbApp)
     plt.show()
