@@ -262,6 +262,7 @@ def test(nbS, p, nbApp):
         x = [i for i in range(3, nbApp+1)]
         plt.xlabel("Nombre de graphe appris")
         plt.ylabel("Nombre d'itération nécessaire")
+        plt.title("Nombre d'itération en fonction du nombre d'apprentissage")
         plt.plot(x, list_nb_iter_app, label="nbIter avec apprentissage", color='b')
         plt.plot(x, [nbIterA]*len(x), label="nbIter avec ordre aléatoire", color='r', linestyle='--')
         plt.legend()
