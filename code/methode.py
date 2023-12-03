@@ -191,7 +191,7 @@ def test(nbS, p, nbApp):
 
     H = change_weight(G)
     res = bellman_Ford(H)
-    # res = dist, arboresence, nbIter si non circuit absorbant
+    # res = dist, arborescence, nbIter si non circuit absorbant
     # res = False sinon
     while(res == False):
         H = change_weight(G)
@@ -207,7 +207,7 @@ def test(nbS, p, nbApp):
     for n in range(0, 3):
         newG=change_weight(G)
         res = bellman_Ford(newG)
-        # res = dist, arboresence, nbIter si non circuit absorbant
+        # res = dist, arborescence, nbIter si non circuit absorbant
         # res = False sinon
         while(res == False):
             newG = change_weight(G)
@@ -230,7 +230,7 @@ def test(nbS, p, nbApp):
     for n in range(3, nbApp):
         newG=change_weight(G)
         res = bellman_Ford(newG)
-        # res = dist, arboresence, nbIter si non circuit absorbant
+        # res = dist, arborescence, nbIter si non circuit absorbant
         # res = False sinon
         while(res == False):
             newG = change_weight(G)
