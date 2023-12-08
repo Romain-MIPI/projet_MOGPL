@@ -70,7 +70,7 @@ def bellman_Ford(graphe):
             return dist, construction_arboresecnce(graphe, src, pred), i
 
     #Bellman-Ford doit convergé à au plus n-1 itérations s'il n'a pas de cycle absorbant
-    #print("non convergence, il existe un cycle absorbant")
+    print("non convergence, il existe un cycle absorbant\n")
     return False
 
 def list_source(graphe):
@@ -160,6 +160,14 @@ def test(nbS, p, nbApp):
     npApp (int) : nombre de graphes d'application, >= 3
     on fixe le nombre d'appretissage à 3
     """
+    # Cas d'erreur
+    if nbS <= 0 or (not isinstance(nbS, int)):
+        raise NameError("Le nombre de sommets doit être un entier plus grand que 0")
+    if p <= 0 or p > 1:
+        raise NameError("La probabilité doit être dans [0:1]")
+    if nbApp < 3 or (not isinstance(nbApp, int)):
+        raise NameError("Le nombre d'apprentissage doit être un entier plus grand que 2")
+    
     # génération de G et choix de sommet source
     G = genere_graphe(nbS, p)
 
@@ -258,6 +266,7 @@ def test(nbS, p, nbApp):
     print("\nordre_aleatoire =", ordre_aleatoire)
     print("nbIter =", nbIterA)
 
+    # génération du courbe si nbApp > 3
     if nbApp > 3:        
         x = [i for i in range(3, nbApp+1)]
         plt.xlabel("Nombre de graphe appris")
